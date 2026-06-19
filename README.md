@@ -4,7 +4,7 @@ Aplicação Web open-source (só com HTML, CSS e JS puro) que faz o Custeio por 
 Criei uma Aplicação Web open-source (só com HTML, CSS e JS puro) que faz o Custeio por Absorção.
 
 Em vez de jogar um "percentual de despesa" aleatório, a ferramenta cruza:
-⏱ O tempo de dedicação ao projeto
+```⏱ O tempo de dedicação ao projeto
 🏢 O custo operacional da sua estrutura
 ⚙️ A capacidade produtiva mensal
 
