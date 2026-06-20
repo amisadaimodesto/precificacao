@@ -37,7 +37,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.08);
         }
 
-        /* Ajuste do Header para acomodar o botão de PDF */
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -150,7 +149,7 @@
             background-color: transparent;
         }
 
-        /* --- TABELA DE RESUMO --- */
+        /* --- TABELA DE RESUMO E PRECIFICAÇÃO (ALINHAMENTO SEGURO) --- */
         .summary-table {
             width: 100%;
             border-collapse: collapse;
@@ -158,34 +157,32 @@
         }
 
         .summary-table td {
-            padding: 1rem 0.5rem;
+            padding: 0.85rem 0.5rem;
             border-bottom: 1px solid var(--border-light);
             vertical-align: middle;
             font-size: 0.95rem;
         }
 
+        /* Força a última coluna a alinhar tudo estritamente à direita */
         .summary-table td:last-child {
             text-align: right;
             font-variant-numeric: tabular-nums;
-            width: 150px; 
+            width: 160px; 
         }
 
-        .summary-table .input-group {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 0.5rem;
-        }
-
-        .summary-table .input-group input {
-            width: 90px;
+        /* Padronização das caixas de input do resumo */
+        .summary-table input[type="number"] {
+            width: 120px;
             text-align: right;
             border: 1px solid var(--border-light);
-            background: transparent;
+            background-color: #f9f9f9;
+            padding: 0.4rem 0.5rem;
+            display: inline-block;
         }
 
-        .summary-table .input-group input:focus {
+        .summary-table input[type="number"]:focus {
             border-color: var(--border-dark);
+            background-color: var(--paper-bg);
         }
 
         .row-subtotal td {
@@ -228,11 +225,10 @@
             border-bottom: 1px solid var(--border-dark) !important;
         }
 
-        /* Regras para Impressão e PDF */
         @media print {
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
-            .btn { display: none; } /* Esconde todos os botões na impressão */
+            .btn { display: none; }
             input { border: none !important; background: transparent !important; }
         }
     </style>
@@ -314,38 +310,30 @@
                 <tr>
                     <td style="font-weight: 600;">Prazo de Execução (Horas Úteis)</td>
                     <td>
-                        <div class="input-group">
-                            <input type="number" id="project-duration-hours" value="60" step="1" oninput="calculate()" style="font-weight: 600;"> h
-                        </div>
+                        <input type="number" id="project-duration-hours" value="60" step="1" oninput="calculate()">
                     </td>
                 </tr>
                 <tr>
                     <td>Custo Fixo/Operacional Mensal da Empresa (R$)</td>
                     <td>
-                        <div class="input-group">
-                            R$ <input type="number" id="monthly-fixed-cost" value="2000" step="100" oninput="calculate()">
-                        </div>
+                        <input type="number" id="monthly-fixed-cost" value="2000" step="100" oninput="calculate()">
                     </td>
                 </tr>
                 <tr>
                     <td>Capacidade Produtiva Mensal (Horas)</td>
                     <td>
-                        <div class="input-group">
-                            <input type="number" id="monthly-capacity" value="160" step="10" oninput="calculate()"> h
-                        </div>
+                        <input type="number" id="monthly-capacity" value="160" step="10" oninput="calculate()">
                     </td>
                 </tr>
                 <tr>
                     <td>Dedicação da Estrutura a este Projeto (%)</td>
                     <td>
-                        <div class="input-group">
-                            <input type="number" id="allocation-percent" value="100" step="5" oninput="calculate()"> %
-                        </div>
+                        <input type="number" id="allocation-percent" value="100" step="5" oninput="calculate()">
                     </td>
                 </tr>
                 <tr class="info-row">
-                    <td>↳ Despesas Indiretas Alocadas (Valor da Hora Operacional x Prazo x Dedicação)</td>
-                    <td id="allocated-expenses" style="text-align: right; font-weight: 600;">R$ 0,00</td>
+                    <td>↳ Despesas Indiretas Alocadas (Custo Hora Operacional x Prazo x Dedicação)</td>
+                    <td id="allocated-expenses" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
 
                 <tr>
@@ -370,9 +358,7 @@
                 <tr>
                     <td style="font-weight: 600;">Margem de Lucro Desejada Líquida (%)</td>
                     <td>
-                        <div class="input-group">
-                            <input type="number" id="margin-percent" value="20" step="0.5" oninput="calculate()" style="font-weight: 600;"> %
-                        </div>
+                        <input type="number" id="margin-percent" value="20" step="0.5" oninput="calculate()" style="font-weight: 600;">
                     </td>
                 </tr>
                 <tr class="row-highlight">
@@ -389,7 +375,6 @@
 </div>
 
 <script>
-    // Flag para evitar loop de salvamento durante o carregamento inicial
     let isAppReady = false;
 
     const formatCurrency = (value) => {
@@ -417,7 +402,7 @@
     }
 
     function saveData() {
-        if (!isAppReady) return; // Não salva enquanto está carregando os dados na tela
+        if (!isAppReady) return;
 
         const data = {
             materials: [],
@@ -456,30 +441,26 @@
         if (savedData) {
             const data = JSON.parse(savedData);
             
-            // Restaura configurações de resumo
             document.getElementById('project-duration-hours').value = data.settings.duration || 60;
             document.getElementById('monthly-fixed-cost').value = data.settings.fixedCost || 2000;
             document.getElementById('monthly-capacity').value = data.settings.capacity || 160;
             document.getElementById('allocation-percent').value = data.settings.allocation || 100;
             document.getElementById('margin-percent').value = data.settings.margin || 20;
 
-            // Restaura tabelas
             data.materials.forEach(item => addRow('materials', item.name, item.qty, item.price));
             data.labor.forEach(item => addRow('labor', item.name, item.qty, item.price));
             
-            // Se as tabelas estiverem vazias no save, garante ao menos uma linha vazia
             if(data.materials.length === 0) addRow('materials');
             if(data.labor.length === 0) addRow('labor');
 
         } else {
-            // Se for a primeira vez que a pessoa abre o app, exibe o conteúdo de exemplo
             addRow('materials', 'Licença de Software Adicional', 1, 350.00);
             addRow('materials', 'Materiais Diversos', 1, 150.00);
             addRow('labor', 'Especialista Sênior', 40, 80.00);
             addRow('labor', 'Assistente Técnico', 20, 35.00);
         }
         
-        isAppReady = true; // Libera o app para começar a salvar as edições
+        isAppReady = true;
         calculate();
     }
 
@@ -496,7 +477,7 @@
         document.getElementById('total-materials').innerText = formatCurrency(totalMaterials);
         document.getElementById('sum-materials').innerText = formatCurrency(totalMaterials);
 
-        // 2. Mão de Obra e Somatório de Horas
+        // 2. Mão de Obra
         let totalLabor = 0;
         let sumHours = 0;
         document.querySelectorAll('#labor-table tbody tr').forEach(row => {
@@ -543,11 +524,9 @@
         const grossProfit = idealPrice - totalCost;
         document.getElementById('gross-profit').innerText = formatCurrency(grossProfit);
 
-        // Salva tudo no Local Storage após o cálculo
         saveData();
     }
 
-    // Inicializa o app carregando os dados salvos ou dados de exemplo
     window.onload = loadData;
 </script>
 
