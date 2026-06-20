@@ -149,7 +149,7 @@
             background-color: transparent;
         }
 
-        /* --- TABELA DE RESUMO E PRECIFICAÇÃO (ALINHAMENTO SEGURO) --- */
+        /* --- TABELA DE RESUMO E PRECIFICAÇÃO --- */
         .summary-table {
             width: 100%;
             border-collapse: collapse;
@@ -163,14 +163,12 @@
             font-size: 0.95rem;
         }
 
-        /* Força a última coluna a alinhar tudo estritamente à direita */
         .summary-table td:last-child {
             text-align: right;
             font-variant-numeric: tabular-nums;
             width: 160px; 
         }
 
-        /* Padronização das caixas de input do resumo */
         .summary-table input[type="number"] {
             width: 120px;
             text-align: right;
@@ -310,25 +308,25 @@
                 <tr>
                     <td style="font-weight: 600;">Prazo de Execução (Horas Úteis)</td>
                     <td>
-                        <input type="number" id="project-duration-hours" value="60" step="1" oninput="calculate()">
+                        <input type="number" id="project-duration-hours" value="" step="1" oninput="calculate()">
                     </td>
                 </tr>
                 <tr>
                     <td>Custo Fixo/Operacional Mensal da Empresa (R$)</td>
                     <td>
-                        <input type="number" id="monthly-fixed-cost" value="2000" step="100" oninput="calculate()">
+                        <input type="number" id="monthly-fixed-cost" value="" step="100" oninput="calculate()">
                     </td>
                 </tr>
                 <tr>
                     <td>Capacidade Produtiva Mensal (Horas)</td>
                     <td>
-                        <input type="number" id="monthly-capacity" value="160" step="10" oninput="calculate()">
+                        <input type="number" id="monthly-capacity" value="" step="10" oninput="calculate()">
                     </td>
                 </tr>
                 <tr>
                     <td>Dedicação da Estrutura a este Projeto (%)</td>
                     <td>
-                        <input type="number" id="allocation-percent" value="100" step="5" oninput="calculate()">
+                        <input type="number" id="allocation-percent" value="" step="5" oninput="calculate()">
                     </td>
                 </tr>
                 <tr class="info-row">
@@ -358,7 +356,7 @@
                 <tr>
                     <td style="font-weight: 600;">Margem de Lucro Desejada Líquida (%)</td>
                     <td>
-                        <input type="number" id="margin-percent" value="20" step="0.5" oninput="calculate()" style="font-weight: 600;">
+                        <input type="number" id="margin-percent" value="" step="0.5" oninput="calculate()" style="font-weight: 600;">
                     </td>
                 </tr>
                 <tr class="row-highlight">
@@ -381,14 +379,14 @@
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
-    function addRow(type, name = '', qty = 0, price = 0) {
+    function addRow(type, name = '', qty = '', price = '') {
         const tbody = document.querySelector(`#${type}-table tbody`);
         const tr = document.createElement('tr');
         
         tr.innerHTML = `
             <td><input type="text" value="${name}" class="desc" placeholder="Descreva o item..." oninput="calculate()"></td>
-            <td class="number"><input type="number" class="qty" value="${qty || ''}" step="any" oninput="calculate()" placeholder="0"></td>
-            <td class="number"><input type="number" class="price" value="${price || ''}" step="any" oninput="calculate()" placeholder="0,00"></td>
+            <td class="number"><input type="number" class="qty" value="${qty}" step="any" oninput="calculate()" placeholder="0"></td>
+            <td class="number"><input type="number" class="price" value="${price}" step="any" oninput="calculate()" placeholder="0,00"></td>
             <td class="number total-cell row-total">R$ 0,00</td>
             <td><button class="btn-danger" onclick="removeRow(this)" title="Remover">✕</button></td>
         `;
@@ -441,11 +439,11 @@
         if (savedData) {
             const data = JSON.parse(savedData);
             
-            document.getElementById('project-duration-hours').value = data.settings.duration || 60;
-            document.getElementById('monthly-fixed-cost').value = data.settings.fixedCost || 2000;
-            document.getElementById('monthly-capacity').value = data.settings.capacity || 160;
-            document.getElementById('allocation-percent').value = data.settings.allocation || 100;
-            document.getElementById('margin-percent').value = data.settings.margin || 20;
+            document.getElementById('project-duration-hours').value = data.settings.duration ?? '';
+            document.getElementById('monthly-fixed-cost').value = data.settings.fixedCost ?? '';
+            document.getElementById('monthly-capacity').value = data.settings.capacity ?? '';
+            document.getElementById('allocation-percent').value = data.settings.allocation ?? '';
+            document.getElementById('margin-percent').value = data.settings.margin ?? '';
 
             data.materials.forEach(item => addRow('materials', item.name, item.qty, item.price));
             data.labor.forEach(item => addRow('labor', item.name, item.qty, item.price));
@@ -454,10 +452,9 @@
             if(data.labor.length === 0) addRow('labor');
 
         } else {
-            addRow('materials', 'Licença de Software Adicional', 1, 350.00);
-            addRow('materials', 'Materiais Diversos', 1, 150.00);
-            addRow('labor', 'Especialista Sênior', 40, 80.00);
-            addRow('labor', 'Assistente Técnico', 20, 35.00);
+            // Inicializando com tabelas 100% vazias e sem números pré-preenchidos
+            addRow('materials');
+            addRow('labor');
         }
         
         isAppReady = true;
@@ -495,7 +492,7 @@
         // 3. Rateio de Tempo (Custeio por Absorção em Horas)
         const durationHours = parseFloat(document.getElementById('project-duration-hours').value) || 0;
         const monthlyCost = parseFloat(document.getElementById('monthly-fixed-cost').value) || 0;
-        const monthlyCapacity = parseFloat(document.getElementById('monthly-capacity').value) || 160; 
+        const monthlyCapacity = parseFloat(document.getElementById('monthly-capacity').value) || 0; 
         const allocation = parseFloat(document.getElementById('allocation-percent').value) || 0;
         
         let allocatedExpenses = 0;
@@ -512,8 +509,10 @@
         const marginPercent = parseFloat(document.getElementById('margin-percent').value) || 0;
         let idealPrice = 0;
         
-        if (marginPercent < 100) {
+        if (marginPercent < 100 && marginPercent > 0) {
             idealPrice = totalCost / (1 - (marginPercent / 100));
+        } else if (marginPercent === 0) {
+            idealPrice = totalCost; // Se a margem for 0, o preço é o custo
         } else {
             idealPrice = 0;
         }
